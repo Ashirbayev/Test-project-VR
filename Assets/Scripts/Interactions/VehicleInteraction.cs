@@ -57,10 +57,10 @@ public class VehicleInteraction : MonoBehaviour
 
         bool canEnter = distance <= interactionDistance;
 
-        Debug.Log(
-    "Distance to car: " + distance.ToString("F2") +
-    " | Can enter: " + canEnter
-);
+//        Debug.Log(
+//    "Distance to car: " + distance.ToString("F2") +
+//    " | Can enter: " + canEnter
+//);
 
         if (interactionText != null)
         {
@@ -79,11 +79,11 @@ public class VehicleInteraction : MonoBehaviour
 
         if (triggerPressed)
         {
-            Debug.Log(
-                "TRIGGER PRESSED | " +
-                "Distance: " + distance.ToString("F2") +
-                " | Can enter: " + canEnter
-            );
+            //Debug.Log(
+            //    "TRIGGER PRESSED | " +
+            //    "Distance: " + distance.ToString("F2") +
+            //    " | Can enter: " + canEnter
+            //);
         }
 
         if (triggerPressed)
@@ -128,6 +128,11 @@ public class VehicleInteraction : MonoBehaviour
         carController.isDriving = true;
 
         isInsideVehicle = true;
+
+        if (ScenarioManager.Instance != null)
+        {
+            ScenarioManager.Instance.CompleteStep(8);
+        }
 
         Debug.Log("Player entered vehicle!");
     }

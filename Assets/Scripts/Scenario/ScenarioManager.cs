@@ -1,132 +1,96 @@
-﻿using System;
-using System.Collections.Generic;
+
 using UnityEngine;
 
-
-namespace VRTraining.Scenario
+public enum StepStatus
 {
-    public class ScenarioManager : MonoBehaviour
+    NotStarted,
+    InProgress,
+    Done,
+    Failed
+}
+
+public class ScenarioManager : MonoBehaviour
+{
+    public static ScenarioManager Instance { get; private set; }
+
+    [Header("Scenario Progress")]
+    [SerializeField]
+    private StepStatus[] steps = new StepStatus[9];
+
+    public int CompletedCount
     {
-        [SerializeField] private List<StepGroupData> stepGroups;
-
-        private int _currentGroupIndex = 0;
-        private int _currentStepIndex = 0;
-
- 
-        private List<StepResult> _results = new List<StepResult>();
-
-        
-        public static event System.Action<StepGroupData, StepData> OnStepActivated;
-        public static event System.Action OnActionSuccess;
-        public static event System.Action OnActionWrong; 
-        public static event System.Action OnSequenceViolation;
-        public static event System.Action<List<StepResult>> OnScenarioEnded;
-
-        private void Start()
+        get
         {
-            StartScenario();
-        }
+            int count = 0;
 
-        public void StartScenario()
-        {
-            _currentGroupIndex = 0;
-            _currentStepIndex = 0;
-            _results.Clear();
-
-            if (stepGroups != null && stepGroups.Count > 0)
+            foreach (StepStatus status in steps)
             {
-                ActivateCurrentStep();
-            }
-            else
-            {
-                Debug.LogError("Список групп шагов пуст!");
-            }
-        }
-
-  
-        public void PlayerPerformedAction(StepActionType actionType, string targetTag, int interactedStepId = -1)
-        {
-            if (_currentGroupIndex >= stepGroups.Count) return;
-
-            StepGroupData currentGroup = stepGroups[_currentGroupIndex];
-            StepData expectedStep = currentGroup.Steps[_currentStepIndex];
-
-         
-            if (interactedStepId != -1 && interactedStepId != expectedStep.Id)
-            {
-                HandleSequenceViolation(currentGroup);
-                return;
+                if (status == StepStatus.Done)
+                    count++;
             }
 
-    
-            if (actionType == expectedStep.ExpectedAction && targetTag == expectedStep.TargetTag)
-            {
-                HandleStepSuccess(currentGroup, expectedStep);
-            }
-            else
-            {
-                HandleStepFailure();
-            }
+            return count;
         }
+    }
 
-        private void ActivateCurrentStep()
+    private void Awake()
+    {
+        if (Instance != null && Instance != this)
         {
-            if (_currentGroupIndex < stepGroups.Count)
-            {
-                var group = stepGroups[_currentGroupIndex];
-                if (_currentStepIndex < group.Steps.Count)
-                {
-                    OnStepActivated?.Invoke(group, group.Steps[_currentStepIndex]);
-                    return;
-                }
-            }
-            EndScenario();
+            Destroy(gameObject);
+            return;
         }
 
-        private void HandleStepSuccess(StepGroupData group, StepData step)
-        {
-            _results.Add(new StepResult(group.GroupName, step.Description, StepStatus.Success));
-            OnActionSuccess?.Invoke();
+        Instance = this;
 
-            AdvanceStep();
-        }
+        steps = new StepStatus[9];
+    }
 
-        private void HandleStepFailure()
-        {
-            OnActionWrong?.Invoke();
-        }
+    public void CompleteStep(int stepNumber)
+    {
+        int index = stepNumber - 1;
 
-        private void HandleSequenceViolation(StepGroupData group)
-        {
-            OnSequenceViolation?.Invoke();
+        if (index < 0 || index >= steps.Length)
+            return;
 
-            for (int i = _currentStepIndex; i < group.Steps.Count; i++)
-            {
-                _results.Add(new StepResult(group.GroupName, group.Steps[i].Description, StepStatus.Skipped));
-            }
+        if (steps[index] == StepStatus.Done)
+            return;
 
-            _currentGroupIndex++;
-            _currentStepIndex = 0;
-            ActivateCurrentStep();
-        }
+        steps[index] = StepStatus.Done;
 
-        private void AdvanceStep()
-        {
-            _currentStepIndex++;
-            StepGroupData currentGroup = stepGroups[_currentGroupIndex];
+        Debug.Log(
+            $"Step {stepNumber} DONE | " +
+            $"Progress: {CompletedCount}/9"
+        );
+    }
 
-            if (_currentStepIndex >= currentGroup.Steps.Count)
-            {
-                _currentGroupIndex++;
-                _currentStepIndex = 0;
-            }
+    public void FailStep(int stepNumber)
+    {
+        int index = stepNumber - 1;
 
-            ActivateCurrentStep();
-        }
+        if (index < 0 || index >= steps.Length)
+            return;
 
-        private void EndScenario()
-        {
-            OnScenarioEnded?.Invoke(_results);
-        }
+        if (steps[index] == StepStatus.Done)
+            return;
+
+        steps[index] = StepStatus.Failed;
+
+        Debug.Log($"Step {stepNumber} FAILED");
+    }
+
+    public StepStatus GetStepStatus(int stepNumber)
+    {
+        int index = stepNumber - 1;
+
+        if (index < 0 || index >= steps.Length)
+            return StepStatus.NotStarted;
+
+        return steps[index];
+    }
+
+    public void ResetScenario()
+    {
+        steps = new StepStatus[9];
     }
 }

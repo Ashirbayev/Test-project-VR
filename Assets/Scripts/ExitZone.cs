@@ -37,6 +37,11 @@ public class ExitZone : MonoBehaviour
 
             if (audioSource != null && successSound != null)
                 audioSource.PlayOneShot(successSound);
+
+            if (ScenarioManager.Instance != null)
+            {
+                ScenarioManager.Instance.CompleteStep(6);
+            }
         }
         else
         {

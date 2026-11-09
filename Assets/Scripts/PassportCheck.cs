@@ -53,6 +53,10 @@ public class PassportCheck : MonoBehaviour
 
         if (hasPassport)
         {
+            if (ScenarioManager.Instance != null)
+            {
+                ScenarioManager.Instance.CompleteStep(3);
+            }
             resultText.text = "Succes!";
             resultText.color = Color.green;
 
